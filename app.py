@@ -47,12 +47,17 @@ if uploaded_file:
     leading = 8
     fonte = 7
 
-    style = ParagraphStyle(
-        name="Normal",
-        fontName="Courier",
-        fontSize=fonte,
-        leading=leading,
-    )
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.pdfbase import pdfmetrics
+
+pdfmetrics.registerFont(TTFont('DejaVuSansMono', 'DejaVuSansMono.ttf'))
+
+style = ParagraphStyle(
+    name="Normal",
+    fontName="DejaVuSansMono",
+    fontSize=fonte,
+    leading=leading,
+)
 
     maior_bloco = max(len(bloco) for bloco in blocos)
 
