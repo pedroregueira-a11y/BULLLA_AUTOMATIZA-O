@@ -6,7 +6,7 @@ from io import BytesIO
 
 st.set_page_config(page_title="TXT → PDF", layout="centered")
 
-st.title(""Conversor TXT → PDF"")
+st.title(""Conversor TXT para PDF"")
 st.write("1 Ministério = 1 Página")
 
 uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
