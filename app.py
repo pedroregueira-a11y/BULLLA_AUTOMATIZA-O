@@ -1,6 +1,6 @@
 import streamlit as st
 import re
-from reportlab.platypus import SimpleDocTemplate, Preformatted
+from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
 from reportlab.lib.styles import ParagraphStyle
 from io import BytesIO
 
@@ -14,7 +14,7 @@ uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 if uploaded_file:
 
     # ==========================
-    # LER ARQUIVO (igual VSCode)
+    # LER ARQUIVO
     # ==========================
 
     conteudo = uploaded_file.read()
@@ -49,7 +49,7 @@ if uploaded_file:
         st.stop()
 
     # ==========================
-    # CONFIG (IGUAL ORIGINAL)
+    # CONFIG
     # ==========================
 
     leading = 8
@@ -62,14 +62,8 @@ if uploaded_file:
         leading=leading,
     )
 
-    # ==========================
-    # TAMANHO DO BLOCO
-    # ==========================
-
-    maior_bloco = max(len(bloco) for bloco in blocos)
-
-    altura_total = (maior_bloco * leading) + 20
     largura_total = 600
+    altura_total = 842  # altura padrão A4 retrato
 
     buffer = BytesIO()
 
@@ -88,17 +82,20 @@ if uploaded_file:
 
     elements = []
 
-    for bloco in blocos:
-        texto_bloco = "".join(bloco)
+    for i, bloco in enumerate(blocos):
 
-        # 🔥 REMOVE caracteres problemáticos (\r e nulos)
+        texto_bloco = "".join(bloco)
         texto_bloco = texto_bloco.replace("\r", "").replace("\x00", "")
 
         elements.append(Preformatted(texto_bloco, style))
 
+        # 🔥 GARANTE 1 BLOCO = 1 PÁGINA
+        if i < len(blocos) - 1:
+            elements.append(PageBreak())
+
     doc.build(elements)
 
-    st.success("PDF gerado com 1 Ministério = 1 página, sem quebra.")
+    st.success("PDF gerado com 1 Ministério = 1 página.")
 
     st.download_button(
         label="Baixar PDF",
