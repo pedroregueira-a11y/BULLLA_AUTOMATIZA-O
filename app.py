@@ -1,17 +1,26 @@
 import streamlit as st
-
 import re
 from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
 from reportlab.lib.styles import ParagraphStyle
 from io import BytesIO
 
+# ===============================
+# CONFIGURAÇÃO DA PÁGINA
+# ===============================
+st.set_page_config(
+    page_title="Conversor TXT → PDF",
+    layout="wide"
+)
 
-# 👇 PRIMEIRO configura a página
-st.set_page_config(page_title="Conversor TXT → PDF", layout="wide")
-
-# 👇 DEPOIS entra o CSS customizado (se tiver)
+# ===============================
+# CSS PERSONALIZADO (PALHETA BULLLA)
+# ===============================
 st.markdown("""
     <style>
+        body {
+            background-color: #F4F6FA;
+        }
+
         .stButton > button {
             background-color: #2F6BFF;
             color: white;
@@ -19,12 +28,31 @@ st.markdown("""
             height: 3em;
             font-weight: 600;
             border: none;
+            width: 100%;
+        }
+
+        .stButton > button:hover {
+            background-color: #1f52d6;
+        }
+
+        .stFileUploader {
+            border: 2px dashed #2F6BFF;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        .block-container {
+            padding-top: 2rem;
+            padding-left: 5rem;
+            padding-right: 5rem;
         }
     </style>
 """, unsafe_allow_html=True)
 
-# 👇 AQUI entra o header com logo
-col1, col2 = st.columns([1,4])
+# ===============================
+# HEADER COM LOGO
+# ===============================
+col1, col2 = st.columns([1, 4])
 
 with col1:
     st.image("logo.png", width=120)
@@ -35,11 +63,21 @@ with col2:
         unsafe_allow_html=True
     )
 
-st.markdown("---")  # linha separadora opcional
+st.markdown("---")
 
+# ===============================
+# UPLOAD
+# ===============================
+uploaded_file = st.file_uploader(
+    "Selecione o arquivo TXT",
+    type=["txt"]
+)
+
+# ===============================
+# PROCESSAMENTO
+# ===============================
 if uploaded_file:
 
-    # Lê o arquivo apenas uma vez
     conteudo = uploaded_file.read()
 
     try:
@@ -47,7 +85,6 @@ if uploaded_file:
     except:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
-    # REGEX ORIGINAL (com letras espaçadas)
     padrao_inicio = re.compile(
         r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
     )
@@ -56,7 +93,6 @@ if uploaded_file:
     bloco_atual = []
     capturando = False
 
-    # Ignora tudo antes do primeiro ministério
     for linha in linhas:
         if padrao_inicio.search(linha):
             if capturando and bloco_atual:
@@ -74,7 +110,9 @@ if uploaded_file:
         st.error("Nenhum bloco 'MINISTERIO DA FAZENDA' encontrado.")
         st.stop()
 
-    # Configuração igual ao original
+    # ===============================
+    # CONFIGURAÇÃO PDF
+    # ===============================
     leading = 8
     fonte = 7
 
@@ -112,7 +150,7 @@ if uploaded_file:
 
     doc.build(elements)
 
-    st.success("PDF gerado com sucesso!")
+    st.success(f"PDF gerado com sucesso! ({len(blocos)} ministérios encontrados)")
 
     st.download_button(
         label="Baixar PDF",
