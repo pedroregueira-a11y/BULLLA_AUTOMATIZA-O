@@ -1,4 +1,40 @@
 import streamlit as st
+
+st.markdown("""
+    <style>
+        /* Header custom */
+        header[data-testid="stHeader"] {
+            background-color: #4A4F66;
+        }
+
+        /* Botões */
+        .stButton > button {
+            background-color: #2F6BFF;
+            color: white;
+            border-radius: 8px;
+            height: 3em;
+            font-weight: 600;
+            border: none;
+        }
+
+        .stButton > button:hover {
+            background-color: #1f52d6;
+        }
+
+        /* File uploader */
+        .stFileUploader {
+            border: 2px dashed #2F6BFF;
+            padding: 20px;
+            border-radius: 10px;
+        }
+
+        /* Container principal */
+        .block-container {
+            padding-top: 2rem;
+        }
+    </style>
+""", unsafe_allow_html=True)
+
 import re
 from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
 from reportlab.lib.styles import ParagraphStyle
