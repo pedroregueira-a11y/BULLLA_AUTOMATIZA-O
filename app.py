@@ -1,10 +1,12 @@
 import streamlit as st
 import re
+import unicodedata
 from reportlab.platypus import SimpleDocTemplate, Preformatted
 from reportlab.lib.styles import ParagraphStyle
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from io import BytesIO
+import os
 
 st.set_page_config(page_title="TXT → PDF", layout="centered")
 
@@ -12,6 +14,26 @@ st.title("Conversor TXT para PDF")
 st.write("MINISTERIO DA FAZENDA INFORME PCC")
 
 uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
+
+
+# ==========================================
+# 🔥 FUNÇÃO QUE REMOVE CARACTERES INVISÍVEIS
+# ==========================================
+def limpar_texto(texto):
+    texto_limpo = []
+    for ch in texto:
+        categoria = unicodedata.category(ch)
+
+        # Remove caracteres problemáticos
+        # Cc = control
+        # Cf = formatting
+        # Co = private use
+        # Cs = surrogate
+        if categoria not in ("Cc", "Cf", "Co", "Cs"):
+            texto_limpo.append(ch)
+
+    return "".join(texto_limpo)
+
 
 if uploaded_file:
 
@@ -54,14 +76,19 @@ if uploaded_file:
     leading = 8
     fonte = 7
 
-    # 🔥 REGISTRA FONTE TTF (remove quadrados pretos)
-    pdfmetrics.registerFont(
-        TTFont("DejaVuMono", "DejaVuSansMono.ttf")
-    )
+    # 🔥 REGISTRA FONTE TTF (evita quadrados)
+    if os.path.exists("DejaVuSansMono.ttf"):
+        pdfmetrics.registerFont(
+            TTFont("DejaVuMono", "DejaVuSansMono.ttf")
+        )
+        nome_fonte = "DejaVuMono"
+    else:
+        # fallback caso não encontre a fonte
+        nome_fonte = "Courier"
 
     style = ParagraphStyle(
         name="Normal",
-        fontName="DejaVuMono",
+        fontName=nome_fonte,
         fontSize=fonte,
         leading=leading,
     )
@@ -85,15 +112,19 @@ if uploaded_file:
     elements = []
 
     # =============================
-    # GERA PDF (1 ministério = 1 página)
+    # GERA PDF
     # =============================
     for bloco in blocos:
         texto_bloco = "".join(bloco)
+
+        # 🔥 LIMPA CARACTERES PROBLEMÁTICOS
+        texto_bloco = limpar_texto(texto_bloco)
+
         elements.append(Preformatted(texto_bloco, style))
 
     doc.build(elements)
 
-    st.success("PDF gerado com 1 Ministério = 1 página, sem quebra.")
+    st.success("PDF gerado com sucesso. Sem quadrados e sem caracteres invisíveis.")
 
     st.download_button(
         label="Baixar PDF",
