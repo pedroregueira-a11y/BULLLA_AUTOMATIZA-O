@@ -1,29 +1,29 @@
 import streamlit as st
 import re
-from reportlab.platypus import SimpleDocTemplate, Preformatted
+from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
 from reportlab.lib.styles import ParagraphStyle
 from io import BytesIO
 
 st.set_page_config(page_title="TXT → PDF", layout="centered")
 
 st.title("Conversor TXT → PDF")
-st.write("1 Ministério = 1 Página")
+st.write("1 Ministério = 1 Página (sem quebra)")
 
 uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 
 if uploaded_file:
 
-    # Lê o conteúdo do arquivo apenas uma vez
     conteudo = uploaded_file.read()
 
-    # Tenta UTF-8 primeiro, depois CP1252
     try:
         linhas = conteudo.decode("utf-8").splitlines(True)
     except:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
-    # Regex mais simples e confiável
-    padrao_inicio = re.compile(r"MINISTERIO DA FAZENDA", re.IGNORECASE)
+    # REGEX ORIGINAL (igual ao seu script)
+    padrao_inicio = re.compile(
+        r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
+    )
 
     blocos = []
     bloco_atual = []
@@ -37,12 +37,11 @@ if uploaded_file:
     if bloco_atual:
         blocos.append(bloco_atual)
 
-    # Se não encontrou blocos
     if not blocos:
-        st.error("Nenhum bloco 'MINISTERIO DA FAZENDA' encontrado no arquivo.")
+        st.error("Nenhum bloco 'MINISTERIO DA FAZENDA' encontrado.")
         st.stop()
 
-    # Configuração do PDF
+    # Configuração igual ao original
     leading = 8
     fonte = 7
 
@@ -52,8 +51,6 @@ if uploaded_file:
         fontSize=fonte,
         leading=leading,
     )
-
-    elements = []
 
     maior_bloco = max(len(bloco) for bloco in blocos)
 
@@ -71,9 +68,15 @@ if uploaded_file:
         bottomMargin=5,
     )
 
-    for bloco in blocos:
+    elements = []
+
+    for i, bloco in enumerate(blocos):
         texto_bloco = "".join(bloco)
         elements.append(Preformatted(texto_bloco, style))
+
+        # adiciona quebra de página entre blocos
+        if i < len(blocos) - 1:
+            elements.append(PageBreak())
 
     doc.build(elements)
 
