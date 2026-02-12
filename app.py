@@ -25,39 +25,39 @@ if uploaded_file:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
     # ==========================
-    # BLOCO (MESMO REGEX)
+    # REGEX DO MINISTERIO
     # ==========================
 
     padrao_inicio = re.compile(
         r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
     )
 
+    # ==========================
+    # SEPARAÇÃO DE BLOCOS
+    # ==========================
+
     blocos = []
     bloco_atual = []
-    iniciou = False  # 🔥 controla início real
 
     for linha in linhas:
-
-        if padrao_inicio.search(linha):
-
-            if iniciou and bloco_atual:
-                blocos.append(bloco_atual)
-                bloco_atual = []
-
-            iniciou = True  # começa a capturar somente aqui
-
-        if iniciou:
-            bloco_atual.append(linha)
+        if padrao_inicio.search(linha) and bloco_atual:
+            blocos.append(bloco_atual)
+            bloco_atual = []
+        bloco_atual.append(linha)
 
     if bloco_atual:
         blocos.append(bloco_atual)
+
+    # 🔥 REMOVE APENAS O PRIMEIRO BLOCO SE ELE NÃO CONTIVER MINISTERIO
+    if blocos and not any(padrao_inicio.search(l) for l in blocos[0]):
+        blocos.pop(0)
 
     if not blocos:
         st.error("Nenhum bloco encontrado.")
         st.stop()
 
     # ==========================
-    # CONFIG
+    # CONFIGURAÇÃO DO PDF
     # ==========================
 
     leading = 8
@@ -93,10 +93,13 @@ if uploaded_file:
     for i, bloco in enumerate(blocos):
 
         texto_bloco = "".join(bloco)
+
+        # 🔥 Limpeza de caracteres problemáticos
         texto_bloco = texto_bloco.replace("\r", "").replace("\x00", "")
 
         elements.append(Preformatted(texto_bloco, style))
 
+        # 🔥 Garante 1 Ministério = 1 página
         if i < len(blocos) - 1:
             elements.append(PageBreak())
 
