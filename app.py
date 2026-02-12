@@ -33,33 +33,30 @@ if uploaded_file:
     )
 
     blocos = []
-    bloco_atual = []
+    indices_ministerio = []
 
-    encontrou_primeiro = False
-
-    for linha in linhas:
-
-        # Detecta início de novo Ministério
+    # 1️⃣ Localiza onde começam os Ministérios
+    for i, linha in enumerate(linhas):
         if padrao_inicio.search(linha):
+            indices_ministerio.append(i)
 
-            # Se já estávamos montando um bloco, salva ele
-            if encontrou_primeiro and bloco_atual:
-                blocos.append(bloco_atual)
-                bloco_atual = []
-
-            encontrou_primeiro = True
-
-        # Só começa a montar blocos depois do primeiro Ministério
-        if encontrou_primeiro:
-            bloco_atual.append(linha)
-
-    # Adiciona último bloco
-    if bloco_atual:
-        blocos.append(bloco_atual)
-
-    if not blocos:
-        st.error("Nenhum bloco encontrado.")
+    if not indices_ministerio:
+        st.error("Nenhum Ministério encontrado.")
         st.stop()
+
+    # 2️⃣ Cria blocos incluindo a linha anterior (+-----)
+    for idx, inicio in enumerate(indices_ministerio):
+
+        # inclui linha anterior se existir
+        inicio_real = max(inicio - 1, 0)
+
+        if idx + 1 < len(indices_ministerio):
+            fim = indices_ministerio[idx + 1] - 1
+        else:
+            fim = len(linhas)
+
+        bloco = linhas[inicio_real:fim]
+        blocos.append(bloco)
 
     # ==========================
     # CONFIGURAÇÃO DO PDF
@@ -98,6 +95,8 @@ if uploaded_file:
     for i, bloco in enumerate(blocos):
 
         texto_bloco = "".join(bloco)
+
+        # Remove caracteres invisíveis problemáticos
         texto_bloco = texto_bloco.replace("\r", "").replace("\x00", "")
 
         elements.append(Preformatted(texto_bloco, style))
@@ -107,7 +106,7 @@ if uploaded_file:
 
     doc.build(elements)
 
-    st.success("PDF gerado com 1 Ministério = 1 página (pontilhado preservado).")
+    st.success("PDF gerado com 1 Ministério = 1 página (estrutura preservada).")
 
     st.download_button(
         label="Baixar PDF",
