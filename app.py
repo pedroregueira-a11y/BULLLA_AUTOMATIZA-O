@@ -9,21 +9,33 @@ from io import BytesIO
 st.set_page_config(page_title="TXT → PDF", layout="centered")
 
 st.title("Conversor TXT para PDF")
-st.write("MINISTERIO DA FAZENDA INFORME PCC")
+st.write("MINISTÉRIO DA FAZENDA - INFORME PCC")
 
 uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 
 if uploaded_file:
 
-    # Lê o arquivo apenas uma vez
+    # ==============================
+    # 1️⃣ LER E CORRIGIR ENCODING
+    # ==============================
     conteudo = uploaded_file.read()
 
     try:
-        linhas = conteudo.decode("utf-8").splitlines(True)
+        texto = conteudo.decode("utf-8")
     except UnicodeDecodeError:
-        linhas = conteudo.decode("cp1252").splitlines(True)
+        texto = conteudo.decode("cp1252")
 
-    # Regex para identificar início do ministério
+    # ==============================
+    # 2️⃣ LIMPAR CARACTERES INVISÍVEIS
+    # ==============================
+    texto = re.sub(r'[\uE000-\uF8FF]', '', texto)  # Private Use Area
+    texto = re.sub(r'[\x00-\x1F]', '', texto)      # Caracteres controle
+
+    linhas = texto.splitlines(True)
+
+    # ==============================
+    # 3️⃣ IDENTIFICAR BLOCOS
+    # ==============================
     padrao_inicio = re.compile(
         r"M\s*I\s*N\s*I\s*S\s*T\s*E\s*R\s*I\s*O\s+D\s*A\s+F\s*A\s*Z\s*E\s*N\s*D\s*A"
     )
@@ -44,11 +56,13 @@ if uploaded_file:
         st.error("Nenhum bloco encontrado.")
         st.stop()
 
-    # 🔥 CONFIGURAÇÃO
+    # ==============================
+    # 4️⃣ CONFIGURAÇÃO PDF
+    # ==============================
     leading = 8
     fonte = 7
 
-    # 🔥 REGISTRA FONTE UNICODE (REMOVE QUADRADOS PRETOS)
+    # Registrar fonte Unicode (remove erro no Cloud)
     pdfmetrics.registerFont(TTFont('DejaVuSansMono', 'DejaVuSansMono.ttf'))
 
     style = ParagraphStyle(
@@ -59,7 +73,6 @@ if uploaded_file:
     )
 
     maior_bloco = max(len(bloco) for bloco in blocos)
-
     altura_total = (maior_bloco * leading) + 20
     largura_total = 600
 
@@ -82,7 +95,7 @@ if uploaded_file:
 
     doc.build(elements)
 
-    st.success("PDF gerado com 1 Ministério = 1 página, sem quebra.")
+    st.success("PDF gerado com sucesso ✔")
 
     st.download_button(
         label="Baixar PDF",
