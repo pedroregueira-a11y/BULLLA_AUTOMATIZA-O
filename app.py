@@ -32,25 +32,30 @@ if uploaded_file:
         r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
     )
 
-    # ==========================
-    # SEPARAÇÃO DE BLOCOS
-    # ==========================
-
     blocos = []
     bloco_atual = []
 
-    for linha in linhas:
-        if padrao_inicio.search(linha) and bloco_atual:
-            blocos.append(bloco_atual)
-            bloco_atual = []
-        bloco_atual.append(linha)
+    encontrou_primeiro = False
 
+    for linha in linhas:
+
+        # Detecta início de novo Ministério
+        if padrao_inicio.search(linha):
+
+            # Se já estávamos montando um bloco, salva ele
+            if encontrou_primeiro and bloco_atual:
+                blocos.append(bloco_atual)
+                bloco_atual = []
+
+            encontrou_primeiro = True
+
+        # Só começa a montar blocos depois do primeiro Ministério
+        if encontrou_primeiro:
+            bloco_atual.append(linha)
+
+    # Adiciona último bloco
     if bloco_atual:
         blocos.append(bloco_atual)
-
-    # 🔥 REMOVE APENAS O PRIMEIRO BLOCO SE ELE NÃO CONTIVER MINISTERIO
-    if blocos and not any(padrao_inicio.search(l) for l in blocos[0]):
-        blocos.pop(0)
 
     if not blocos:
         st.error("Nenhum bloco encontrado.")
@@ -93,19 +98,16 @@ if uploaded_file:
     for i, bloco in enumerate(blocos):
 
         texto_bloco = "".join(bloco)
-
-        # 🔥 Limpeza de caracteres problemáticos
         texto_bloco = texto_bloco.replace("\r", "").replace("\x00", "")
 
         elements.append(Preformatted(texto_bloco, style))
 
-        # 🔥 Garante 1 Ministério = 1 página
         if i < len(blocos) - 1:
             elements.append(PageBreak())
 
     doc.build(elements)
 
-    st.success("PDF gerado com 1 Ministério = 1 página.")
+    st.success("PDF gerado com 1 Ministério = 1 página (pontilhado preservado).")
 
     st.download_button(
         label="Baixar PDF",
