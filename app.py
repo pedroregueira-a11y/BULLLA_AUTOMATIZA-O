@@ -1,12 +1,8 @@
 import streamlit as st
 import re
-import unicodedata
 from reportlab.platypus import SimpleDocTemplate, Preformatted
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.pdfbase.ttfonts import TTFont
-from reportlab.pdfbase import pdfmetrics
 from io import BytesIO
-import os
 
 st.set_page_config(page_title="TXT → PDF", layout="centered")
 
@@ -15,31 +11,12 @@ st.write("MINISTERIO DA FAZENDA INFORME PCC")
 
 uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 
-
-# ==========================================
-# 🔥 FUNÇÃO QUE REMOVE CARACTERES INVISÍVEIS
-# ==========================================
-def limpar_texto(texto):
-    texto_limpo = []
-    for ch in texto:
-        categoria = unicodedata.category(ch)
-
-        # Remove caracteres problemáticos
-        # Cc = control
-        # Cf = formatting
-        # Co = private use
-        # Cs = surrogate
-        if categoria not in ("Cc", "Cf", "Co", "Cs"):
-            texto_limpo.append(ch)
-
-    return "".join(texto_limpo)
-
-
 if uploaded_file:
 
-    # =============================
-    # LEITURA DO TXT
-    # =============================
+    # ==========================
+    # LER ARQUIVO (igual VSCode)
+    # ==========================
+
     conteudo = uploaded_file.read()
 
     try:
@@ -47,11 +24,12 @@ if uploaded_file:
     except UnicodeDecodeError:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
-    # =============================
-    # REGEX INICIO BLOCO
-    # =============================
+    # ==========================
+    # BLOCO (MESMO REGEX)
+    # ==========================
+
     padrao_inicio = re.compile(
-        r"M\s*I\s*N\s*I\s*S\s*T\s*E\s*R\s*I\s*O\s+D\s*A\s+F\s*A\s*Z\s*E\s*N\s*D\s*A"
+        r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
     )
 
     blocos = []
@@ -70,28 +48,23 @@ if uploaded_file:
         st.error("Nenhum bloco encontrado.")
         st.stop()
 
-    # =============================
-    # CONFIGURAÇÃO PDF
-    # =============================
+    # ==========================
+    # CONFIG (IGUAL ORIGINAL)
+    # ==========================
+
     leading = 8
     fonte = 7
 
-    # 🔥 REGISTRA FONTE TTF (evita quadrados)
-    if os.path.exists("DejaVuSansMono.ttf"):
-        pdfmetrics.registerFont(
-            TTFont("DejaVuMono", "DejaVuSansMono.ttf")
-        )
-        nome_fonte = "DejaVuMono"
-    else:
-        # fallback caso não encontre a fonte
-        nome_fonte = "Courier"
-
     style = ParagraphStyle(
         name="Normal",
-        fontName=nome_fonte,
+        fontName="Courier",
         fontSize=fonte,
         leading=leading,
     )
+
+    # ==========================
+    # TAMANHO DO BLOCO
+    # ==========================
 
     maior_bloco = max(len(bloco) for bloco in blocos)
 
@@ -109,22 +82,19 @@ if uploaded_file:
         bottomMargin=5,
     )
 
+    # ==========================
+    # GERAR PDF
+    # ==========================
+
     elements = []
 
-    # =============================
-    # GERA PDF
-    # =============================
     for bloco in blocos:
         texto_bloco = "".join(bloco)
-
-        # 🔥 LIMPA CARACTERES PROBLEMÁTICOS
-        texto_bloco = limpar_texto(texto_bloco)
-
         elements.append(Preformatted(texto_bloco, style))
 
     doc.build(elements)
 
-    st.success("PDF gerado com sucesso. Sem quadrados e sem caracteres invisíveis.")
+    st.success("PDF gerado com 1 Ministério = 1 página, sem quebra.")
 
     st.download_button(
         label="Baixar PDF",
