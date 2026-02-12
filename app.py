@@ -4,64 +4,16 @@ from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
 from reportlab.lib.styles import ParagraphStyle
 from io import BytesIO
 
-# ===============================
-# CONFIGURAÇÃO DA PÁGINA
-# ===============================
-st.set_page_config(
-    page_title="Conversor TXT → PDF",
-    layout="wide"
-)
+st.set_page_config(page_title="TXT → PDF", layout="centered")
 
-# ===============================
-# CSS PERSONALIZADO (PALHETA BULLLA)
-# ===============================
-st.markdown("""
-    <style>
-        body {
-            background-color: #F4F6FA;
-        }
+st.title("Conversor TXT → PDF")
+st.write("1 Ministério = 1 Página (sem quebra)")
 
-        .stButton > button {
-            background-color: #2F6BFF;
-            color: white;
-            border-radius: 8px;
-            height: 3em;
-            font-weight: 600;
-            border: none;
-            width: 100%;
-        }
+uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 
-        .stButton > button:hover {
-            background-color: #1f52d6;
-        }
-
-        .stFileUploader {
-            border: 2px dashed #2F6BFF;
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        .block-container {
-            padding-top: 2rem;
-            padding-left: 5rem;
-            padding-right: 5rem;
-        }
-    </style>
-""", unsafe_allow_html=True)
-
-# ===============================
-# UPLOAD
-# ===============================
-uploaded_file = st.file_uploader(
-    "Selecione o arquivo TXT",
-    type=["txt"]
-)
-
-# ===============================
-# PROCESSAMENTO
-# ===============================
 if uploaded_file:
 
+    # Lê o arquivo apenas uma vez
     conteudo = uploaded_file.read()
 
     try:
@@ -69,6 +21,7 @@ if uploaded_file:
     except:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
+    # REGEX ORIGINAL (com letras espaçadas)
     padrao_inicio = re.compile(
         r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
     )
@@ -77,6 +30,7 @@ if uploaded_file:
     bloco_atual = []
     capturando = False
 
+    # Ignora tudo antes do primeiro ministério
     for linha in linhas:
         if padrao_inicio.search(linha):
             if capturando and bloco_atual:
@@ -94,9 +48,7 @@ if uploaded_file:
         st.error("Nenhum bloco 'MINISTERIO DA FAZENDA' encontrado.")
         st.stop()
 
-    # ===============================
-    # CONFIGURAÇÃO PDF
-    # ===============================
+    # Configuração igual ao original
     leading = 8
     fonte = 7
 
@@ -134,7 +86,7 @@ if uploaded_file:
 
     doc.build(elements)
 
-    st.success(f"PDF gerado com sucesso! ({len(blocos)} ministérios encontrados)")
+    st.success("PDF gerado com sucesso!")
 
     st.download_button(
         label="Baixar PDF",
