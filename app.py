@@ -1,7 +1,8 @@
 import streamlit as st
 import re
-from reportlab.platypus import SimpleDocTemplate, Preformatted
+from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
 from reportlab.lib.styles import ParagraphStyle
+from reportlab.lib.pagesizes import A4
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from io import BytesIO
@@ -15,9 +16,6 @@ uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 
 if uploaded_file:
 
-    # ==============================
-    # 1️⃣ LER E CORRIGIR ENCODING
-    # ==============================
     conteudo = uploaded_file.read()
 
     try:
@@ -25,17 +23,12 @@ if uploaded_file:
     except UnicodeDecodeError:
         texto = conteudo.decode("cp1252")
 
-    # ==============================
-    # 2️⃣ LIMPAR CARACTERES INVISÍVEIS
-    # ==============================
-    texto = re.sub(r'[\uE000-\uF8FF]', '', texto)  # Private Use Area
-    texto = re.sub(r'[\x00-\x1F]', '', texto)      # Caracteres controle
+    # 🔥 Remove caracteres invisíveis
+    texto = re.sub(r'[\uE000-\uF8FF]', '', texto)
+    texto = re.sub(r'[\x00-\x1F]', '', texto)
 
     linhas = texto.splitlines(True)
 
-    # ==============================
-    # 3️⃣ IDENTIFICAR BLOCOS
-    # ==============================
     padrao_inicio = re.compile(
         r"M\s*I\s*N\s*I\s*S\s*T\s*E\s*R\s*I\s*O\s+D\s*A\s+F\s*A\s*Z\s*E\s*N\s*D\s*A"
     )
@@ -56,42 +49,37 @@ if uploaded_file:
         st.error("Nenhum bloco encontrado.")
         st.stop()
 
-    # ==============================
-    # 4️⃣ CONFIGURAÇÃO PDF
-    # ==============================
-    leading = 8
-    fonte = 7
-
-    # Registrar fonte Unicode (remove erro no Cloud)
+    # 🔥 Registrar fonte Unicode
     pdfmetrics.registerFont(TTFont('DejaVuSansMono', 'DejaVuSansMono.ttf'))
 
     style = ParagraphStyle(
         name="Normal",
         fontName="DejaVuSansMono",
-        fontSize=fonte,
-        leading=leading,
+        fontSize=7,
+        leading=8,
     )
-
-    maior_bloco = max(len(bloco) for bloco in blocos)
-    altura_total = (maior_bloco * leading) + 20
-    largura_total = 600
 
     buffer = BytesIO()
 
+    # ✅ USANDO A4 NORMAL
     doc = SimpleDocTemplate(
         buffer,
-        pagesize=(largura_total, altura_total),
-        rightMargin=5,
-        leftMargin=5,
-        topMargin=5,
-        bottomMargin=5,
+        pagesize=A4,
+        rightMargin=20,
+        leftMargin=20,
+        topMargin=20,
+        bottomMargin=20,
     )
 
     elements = []
 
-    for bloco in blocos:
+    for i, bloco in enumerate(blocos):
         texto_bloco = "".join(bloco)
         elements.append(Preformatted(texto_bloco, style))
+
+        # 🔥 Adiciona quebra de página entre blocos
+        if i < len(blocos) - 1:
+            elements.append(PageBreak())
 
     doc.build(elements)
 
