@@ -1,6 +1,6 @@
 import streamlit as st
 import re
-from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Preformatted
 from reportlab.lib.styles import ParagraphStyle
 from io import BytesIO
 
@@ -18,34 +18,29 @@ if uploaded_file:
 
     try:
         linhas = conteudo.decode("utf-8").splitlines(True)
-    except:
+    except UnicodeDecodeError:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
-    # REGEX ORIGINAL (com letras espaçadas)
+    # 🔥 MESMO REGEX DO VS CODE
     padrao_inicio = re.compile(
-        r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
+        r"M\s*I\s*N\s*I\s*S\s*T\s*E\s*R\s*I\s*O\s+D\s*A\s+F\s*A\s*Z\s*E\s*N\s*D\s*A"
     )
 
     blocos = []
     bloco_atual = []
-    capturando = False
 
-    # Ignora tudo antes do primeiro ministério
+    # 🔥 MESMA LÓGICA DO VS CODE
     for linha in linhas:
-        if padrao_inicio.search(linha):
-            if capturando and bloco_atual:
-                blocos.append(bloco_atual)
-                bloco_atual = []
-            capturando = True
-
-        if capturando:
-            bloco_atual.append(linha)
+        if padrao_inicio.search(linha) and bloco_atual:
+            blocos.append(bloco_atual)
+            bloco_atual = []
+        bloco_atual.append(linha)
 
     if bloco_atual:
         blocos.append(bloco_atual)
 
     if not blocos:
-        st.error("Nenhum bloco 'MINISTERIO DA FAZENDA' encontrado.")
+        st.error("Nenhum bloco encontrado.")
         st.stop()
 
     # Configuração igual ao original
@@ -77,16 +72,14 @@ if uploaded_file:
 
     elements = []
 
-    for i, bloco in enumerate(blocos):
+    # 🔥 SEM PageBreak (igual VSCode)
+    for bloco in blocos:
         texto_bloco = "".join(bloco)
         elements.append(Preformatted(texto_bloco, style))
 
-        if i < len(blocos) - 1:
-            elements.append(PageBreak())
-
     doc.build(elements)
 
-    st.success("PDF gerado com sucesso!")
+    st.success("PDF gerado com 1 Ministério = 1 página, sem quebra.")
 
     st.download_button(
         label="Baixar PDF",
