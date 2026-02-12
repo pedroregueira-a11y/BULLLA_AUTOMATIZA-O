@@ -2,24 +2,28 @@ import streamlit as st
 import re
 from reportlab.platypus import SimpleDocTemplate, Preformatted
 from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.units import mm
 from io import BytesIO
 
-st.title("Conversor TXT → PDF (1 Ministério = 1 Página)")
+st.set_page_config(page_title="TXT → PDF", layout="centered")
+
+st.title("Conversor TXT → PDF")
+st.write("1 Ministério = 1 Página")
 
 uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 
 if uploaded_file:
 
-    # Tentar ler com utf-8 ou cp1252
-    try:
-        linhas = uploaded_file.read().decode("utf-8").splitlines(True)
-    except:
-        linhas = uploaded_file.read().decode("cp1252").splitlines(True)
+    # Lê o conteúdo do arquivo apenas uma vez
+    conteudo = uploaded_file.read()
 
-    padrao_inicio = re.compile(
-        r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
-    )
+    # Tenta UTF-8 primeiro, depois CP1252
+    try:
+        linhas = conteudo.decode("utf-8").splitlines(True)
+    except:
+        linhas = conteudo.decode("cp1252").splitlines(True)
+
+    # Regex mais simples e confiável
+    padrao_inicio = re.compile(r"MINISTERIO DA FAZENDA", re.IGNORECASE)
 
     blocos = []
     bloco_atual = []
@@ -33,7 +37,12 @@ if uploaded_file:
     if bloco_atual:
         blocos.append(bloco_atual)
 
-    # Configuração PDF
+    # Se não encontrou blocos
+    if not blocos:
+        st.error("Nenhum bloco 'MINISTERIO DA FAZENDA' encontrado no arquivo.")
+        st.stop()
+
+    # Configuração do PDF
     leading = 8
     fonte = 7
 
