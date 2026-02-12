@@ -1,6 +1,6 @@
-Chat, esse código: import streamlit as st
+import streamlit as st
 import re
-from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
+from reportlab.platypus import SimpleDocTemplate, Preformatted
 from reportlab.lib.styles import ParagraphStyle
 from io import BytesIO
 
@@ -18,34 +18,29 @@ if uploaded_file:
 
     try:
         linhas = conteudo.decode("utf-8").splitlines(True)
-    except:
+    except UnicodeDecodeError:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
-    # REGEX ORIGINAL (com letras espaçadas)
+    # 🔥 MESMO REGEX DO VS CODE
     padrao_inicio = re.compile(
-        r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
+        r"M\s*I\s*N\s*I\s*S\s*T\s*E\s*R\s*I\s*O\s+D\s*A\s+F\s*A\s*Z\s*E\s*N\s*D\s*A"
     )
 
     blocos = []
     bloco_atual = []
-    capturando = False
 
-    # Ignora tudo antes do primeiro ministério
+    # 🔥 MESMA LÓGICA DO VS CODE
     for linha in linhas:
-        if padrao_inicio.search(linha):
-            if capturando and bloco_atual:
-                blocos.append(bloco_atual)
-                bloco_atual = []
-            capturando = True
-
-        if capturando:
-            bloco_atual.append(linha)
+        if padrao_inicio.search(linha) and bloco_atual:
+            blocos.append(bloco_atual)
+            bloco_atual = []
+        bloco_atual.append(linha)
 
     if bloco_atual:
         blocos.append(bloco_atual)
 
     if not blocos:
-        st.error("Nenhum bloco 'MINISTERIO DA FAZENDA' encontrado.")
+        st.error("Nenhum bloco encontrado.")
         st.stop()
 
     # Configuração igual ao original
@@ -77,96 +72,18 @@ if uploaded_file:
 
     elements = []
 
-    for i, bloco in enumerate(blocos):
+    # 🔥 SEM PageBreak (igual VSCode)
+    for bloco in blocos:
         texto_bloco = "".join(bloco)
         elements.append(Preformatted(texto_bloco, style))
 
-        if i < len(blocos) - 1:
-            elements.append(PageBreak())
-
     doc.build(elements)
 
-    st.success("PDF gerado com sucesso!")
+    st.success("PDF gerado com 1 Ministério = 1 página, sem quebra.")
 
     st.download_button(
         label="Baixar PDF",
         data=buffer.getvalue(),
         file_name="resultado.pdf",
         mime="application/pdf"
-    )   não está exatamente igual ao que eu rodo no vscode está? pq está vindo diferente o PDF, segue oque eu rodo na minha maquina import os
-import re
-from reportlab.platypus import SimpleDocTemplate, Preformatted
-from reportlab.lib.styles import ParagraphStyle
-from reportlab.lib.units import mm
-
-# caminho
-
-caminho_txt = r"C:\Users\B2401355\Desktop\TESTE_GAD\3 - APB335AA INFORME PCC 2025.txt"
-caminho_pdf = r"C:\Users\B2401355\Desktop\TESTE_GAD\APB335AA INFORME PCC 2025.pdf"
-
-# ler arquivo
-
-try:
-    with open(caminho_txt, "r", encoding="utf-8") as f:
-        linhas = f.readlines()
-except UnicodeDecodeError:
-    with open(caminho_txt, "r", encoding="cp1252") as f:
-        linhas = f.readlines()
-
-# blocos
-
-padrao_inicio = re.compile(
-    r"M\s*I\s*N\s*I\s*S\s*T\s*E\s*R\s*I\s*O\s+D\s*A\s+F\s*A\s*Z\s*E\s*N\s*D\s*A"
-)
-
-blocos = []
-bloco_atual = []
-
-for linha in linhas:
-    if padrao_inicio.search(linha) and bloco_atual:
-        blocos.append(bloco_atual)
-        bloco_atual = []
-    bloco_atual.append(linha)
-
-if bloco_atual:
-    blocos.append(bloco_atual)
-
-# confg 
-
-leading = 8
-fonte = 7
-
-style = ParagraphStyle(
-    name="Normal",
-    fontName="Courier",
-    fontSize=fonte,
-    leading=leading,
-)
-
-elements = []
-
-# tamanho do bloco
-
-maior_bloco = max(len(bloco) for bloco in blocos)
-
-altura_total = (maior_bloco * leading) + 20
-largura_total = 600
-
-doc = SimpleDocTemplate(
-    caminho_pdf,
-    pagesize=(largura_total, altura_total),
-    rightMargin=5,
-    leftMargin=5,
-    topMargin=5,
-    bottomMargin=5,
-)
-
-#  PDF
-
-for bloco in blocos:
-    texto_bloco = "".join(bloco)
-    elements.append(Preformatted(texto_bloco, style))
-
-doc.build(elements)
-
-print("PDF gerado com 1 Ministério = 1 página, sem quebra.")
+    )
