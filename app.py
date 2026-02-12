@@ -13,6 +13,7 @@ uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
 
 if uploaded_file:
 
+    # Lê o arquivo apenas uma vez
     conteudo = uploaded_file.read()
 
     try:
@@ -20,19 +21,25 @@ if uploaded_file:
     except:
         linhas = conteudo.decode("cp1252").splitlines(True)
 
-    # REGEX ORIGINAL (igual ao seu script)
+    # REGEX ORIGINAL (com letras espaçadas)
     padrao_inicio = re.compile(
         r"M\sI\sN\sI\sS\sT\sE\sR\sI\sO\s+D\sA\s+F\sA\sZ\sE\sN\sD\sA"
     )
 
     blocos = []
     bloco_atual = []
+    capturando = False
 
+    # Ignora tudo antes do primeiro ministério
     for linha in linhas:
-        if padrao_inicio.search(linha) and bloco_atual:
-            blocos.append(bloco_atual)
-            bloco_atual = []
-        bloco_atual.append(linha)
+        if padrao_inicio.search(linha):
+            if capturando and bloco_atual:
+                blocos.append(bloco_atual)
+                bloco_atual = []
+            capturando = True
+
+        if capturando:
+            bloco_atual.append(linha)
 
     if bloco_atual:
         blocos.append(bloco_atual)
@@ -74,7 +81,6 @@ if uploaded_file:
         texto_bloco = "".join(bloco)
         elements.append(Preformatted(texto_bloco, style))
 
-        # adiciona quebra de página entre blocos
         if i < len(blocos) - 1:
             elements.append(PageBreak())
 
