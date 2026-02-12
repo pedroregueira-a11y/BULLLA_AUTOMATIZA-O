@@ -90,6 +90,10 @@ if uploaded_file:
 
     for bloco in blocos:
         texto_bloco = "".join(bloco)
+
+        # 🔥 REMOVE caracteres problemáticos (\r e nulos)
+        texto_bloco = texto_bloco.replace("\r", "").replace("\x00", "")
+
         elements.append(Preformatted(texto_bloco, style))
 
     doc.build(elements)
