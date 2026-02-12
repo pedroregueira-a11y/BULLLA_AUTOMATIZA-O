@@ -34,12 +34,20 @@ if uploaded_file:
 
     blocos = []
     bloco_atual = []
+    iniciou = False  # 🔥 controla início real
 
     for linha in linhas:
-        if padrao_inicio.search(linha) and bloco_atual:
-            blocos.append(bloco_atual)
-            bloco_atual = []
-        bloco_atual.append(linha)
+
+        if padrao_inicio.search(linha):
+
+            if iniciou and bloco_atual:
+                blocos.append(bloco_atual)
+                bloco_atual = []
+
+            iniciou = True  # começa a capturar somente aqui
+
+        if iniciou:
+            bloco_atual.append(linha)
 
     if bloco_atual:
         blocos.append(bloco_atual)
@@ -63,7 +71,7 @@ if uploaded_file:
     )
 
     largura_total = 600
-    altura_total = 842  # altura padrão A4 retrato
+    altura_total = 842  # A4 retrato
 
     buffer = BytesIO()
 
@@ -89,7 +97,6 @@ if uploaded_file:
 
         elements.append(Preformatted(texto_bloco, style))
 
-        # 🔥 GARANTE 1 BLOCO = 1 PÁGINA
         if i < len(blocos) - 1:
             elements.append(PageBreak())
 
