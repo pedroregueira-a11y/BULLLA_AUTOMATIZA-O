@@ -1,13 +1,17 @@
 import streamlit as st
 
+import re
+from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
+from reportlab.lib.styles import ParagraphStyle
+from io import BytesIO
+
+
+# 👇 PRIMEIRO configura a página
+st.set_page_config(page_title="Conversor TXT → PDF", layout="wide")
+
+# 👇 DEPOIS entra o CSS customizado (se tiver)
 st.markdown("""
     <style>
-        /* Header custom */
-        header[data-testid="stHeader"] {
-            background-color: #4A4F66;
-        }
-
-        /* Botões */
         .stButton > button {
             background-color: #2F6BFF;
             color: white;
@@ -16,36 +20,22 @@ st.markdown("""
             font-weight: 600;
             border: none;
         }
-
-        .stButton > button:hover {
-            background-color: #1f52d6;
-        }
-
-        /* File uploader */
-        .stFileUploader {
-            border: 2px dashed #2F6BFF;
-            padding: 20px;
-            border-radius: 10px;
-        }
-
-        /* Container principal */
-        .block-container {
-            padding-top: 2rem;
-        }
     </style>
 """, unsafe_allow_html=True)
 
-import re
-from reportlab.platypus import SimpleDocTemplate, Preformatted, PageBreak
-from reportlab.lib.styles import ParagraphStyle
-from io import BytesIO
+# 👇 AQUI entra o header com logo
+col1, col2 = st.columns([1,4])
 
-st.set_page_config(page_title="TXT → PDF", layout="centered")
+with col1:
+    st.image("logo.png", width=120)
 
-st.title("Conversor TXT → PDF")
-st.write("1 Ministério = 1 Página (sem quebra)")
+with col2:
+    st.markdown(
+        "<h2 style='color:#4A4F66; margin-top:15px;'>Conversor TXT → PDF</h2>",
+        unsafe_allow_html=True
+    )
 
-uploaded_file = st.file_uploader("Envie o arquivo .txt", type=["txt"])
+st.markdown("---")  # linha separadora opcional
 
 if uploaded_file:
 
