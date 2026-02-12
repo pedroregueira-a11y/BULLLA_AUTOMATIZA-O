@@ -50,22 +50,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ===============================
-# HEADER COM LOGO
-# ===============================
-col1, col2 = st.columns([1, 4])
-
-with col1:
-    st.image("logo.png", width=120)
-
-with col2:
-    st.markdown(
-        "<h2 style='color:#4A4F66; margin-top:15px;'>Conversor TXT → PDF</h2>",
-        unsafe_allow_html=True
-    )
-
-st.markdown("---")
-
-# ===============================
 # UPLOAD
 # ===============================
 uploaded_file = st.file_uploader(
